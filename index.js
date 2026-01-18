@@ -41,10 +41,8 @@ const decodeJid = (jid) => {
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'web'))); // සයිට් එකේ CSS/JS වලට
+app.use(express.static(path.join(__dirname, 'web')));
 
-// --- 🌐 Pair Logic ---
-// ඔයාගේ පරණ 'pair.js' එක මේ project එක ඇතුළට අරන් මෙතනින් link කරන්න
 let codeRouter = require('./pair'); 
 app.use('/code', codeRouter);
 
@@ -56,7 +54,6 @@ app.get('/', (req, res) => {
 async function startSystem() {
     await connectDB();
     
-    // Plugins Load කිරීම
     const pluginsPath = path.join(__dirname, "plugins");
     if (fs.existsSync(pluginsPath)) {
         fs.readdirSync(pluginsPath).forEach((plugin) => {
@@ -67,14 +64,12 @@ async function startSystem() {
     }
     console.log(`✨ Loaded: ${commands.length} Commands`);
 
-    // DB එකෙන් පරණ Sessions load කර connect කිරීම
     const allSessions = await Session.find({});
     console.log(`📂 Total sessions: ${allSessions.length}. Connecting...`);
     for (let sessionData of allSessions) {
         await connectToWA(sessionData);
     }
 
-    // ⚡ වැදගත්ම කොටස: සයිට් එකෙන් කවුරුහරි අලුතින් scan කළොත් ඒ වෙලාවෙම connect වීම
     Session.watch().on('change', async (data) => {
         if (data.operationType === 'insert') {
             console.log("🆕 New session detected! Connecting...");
@@ -86,7 +81,6 @@ async function startSystem() {
 async function connectToWA(sessionData) {
     const userNumber = sessionData.number.split("@")[0];
     global.BOT_SESSIONS_CONFIG[userNumber] = await getBotSettings(userNumber);
-    let userSettings = global.BOT_SESSIONS_CONFIG[userNumber];
 
     const authPath = path.join(__dirname, `./auth/${userNumber}/`);
     await fs.ensureDir(authPath);
@@ -124,9 +118,10 @@ async function connectToWA(sessionData) {
             }
         } else if (connection === "open") {
             console.log(`✅ [${userNumber}] Connected via Elite Engine`);
-            if (userSettings?.connectionMsg === 'true') {
+            let currentSettings = global.BOT_SESSIONS_CONFIG[userNumber];
+            if (currentSettings?.connectionMsg === 'true') {
                 await zanta.sendMessage(decodeJid(zanta.user.id), {
-                    text: `*${userSettings.botName || 'ZANTA-MD'}* is Online 🤖`,
+                    text: `*${currentSettings.botName || 'ZANTA-MD'}* is Online 🤖`,
                     ai: true 
                 });
             }
@@ -138,17 +133,42 @@ async function connectToWA(sessionData) {
     zanta.ev.on("messages.upsert", async ({ messages }) => {
         const mek = messages[0];
         if (!mek || !mek.message) return;
-        userSettings = global.BOT_SESSIONS_CONFIG[userNumber];
+
+        // ✅ User Number එක හරියට ලබා ගැනීම (Settings Load කිරීමට)
+        const myNumber = zanta.user.id.split(':')[0];
+        const userSettings = global.BOT_SESSIONS_CONFIG[myNumber] || {};
+        
         const from = mek.key.remoteJid;
         const type = getContentType(mek.message);
         const body = (type === "conversation") ? mek.message.conversation : (mek.message[type]?.text || mek.message[type]?.caption || "");
         const prefix = userSettings?.prefix || ".";
+        
+        // --- 🔘 Menu Reply Logic ---
+        const isReply = mek.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         const isCmd = body.startsWith(prefix);
+
+        // මැසේජ් එක Command එකක් නොවී, Reply එකක් නම් (Menu එකට අංකයෙන් Reply කිරීම)
+        if (!isCmd && isReply) {
+            const { lastMenuMessage } = require("./plugins/menu"); // Menu plugin එකෙන් memory එක ගන්නවා
+            const quotedId = mek.message.extendedTextMessage.contextInfo.stanzaId;
+            
+            if (lastMenuMessage.get(from) === quotedId) {
+                const menuCmd = commands.find(c => c.pattern === "menu");
+                if (menuCmd) {
+                    return await menuCmd.function(zanta, mek, sms(zanta, mek), {
+                        from, body, isCmd: true, command: "menu", args: [body.trim()],
+                        reply: (text) => zanta.sendMessage(from, { text, ai: true }, { quoted: mek }),
+                        prefix, userSettings
+                    });
+                }
+            }
+        }
 
         if (from === "status@broadcast" && userSettings?.autoStatusSeen === 'true') {
             await zanta.readMessages([mek.key]);
             return;
         }
+
         if (!isCmd) return;
 
         const m = sms(zanta, mek);
@@ -168,7 +188,6 @@ async function connectToWA(sessionData) {
     });
 }
 
-// Startup
 startSystem();
 
 app.listen(PORT, () => {
