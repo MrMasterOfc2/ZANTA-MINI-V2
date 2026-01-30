@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const config = require("../config");
 
-const MONGO_URI = "mongodb+srv://zanta-test:Akashkavindu12345@cluster0.qedizqe.mongodb.net/?appName=Cluster0";
+const MONGO_URI = "mongodb+srv://sam:sam@cluster0.u1smxsv.mongodb.net/?retryWrites=true&w=majority";
 
 const SettingsSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
