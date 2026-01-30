@@ -5,19 +5,35 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "heroku-postbuild": "echo 'Build completed successfully'",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
-    "baileys-elite": "latest",
+    "baileys-elite": "^4.0.2",
     "express": "^4.19.2",
     "mongoose": "^7.6.14",
     "pino": "^8.21.0",
-    "axios": "^1.13.2",
+    "axios": "^1.7.2",
     "fs-extra": "^11.2.0",
-    "path": "latest",
-    "dotenv": "^17.2.3"
+    "dotenv": "^16.3.1",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5"
   },
   "engines": {
-    "node": ">=20.0.0"
-  }
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/zanta-md.git"
+  },
+  "keywords": [
+    "whatsapp-bot",
+    "baileys",
+    "multi-device"
+  ],
+  "author": "Sahan Maduwantha",
+  "license": "MIT"
 }
