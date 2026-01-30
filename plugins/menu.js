@@ -21,8 +21,8 @@ async (zanta, mek, m, { from, reply, args, userSettings }) => {
         const settings = userSettings || global.BOT_SESSIONS_CONFIG[m.sender.split('@')[0]] || {};
 
         const finalPrefix = settings.prefix || config.DEFAULT_PREFIX || '.'; 
-        const botName = settings.botName || config.DEFAULT_BOT_NAME || "ZANTA-MD"; 
-        const ownerName = settings.ownerName || config.DEFAULT_OWNER_NAME || 'Akash Kavindu';
+        const botName = settings.botName || config.DEFAULT_BOT_NAME || "MASTER-MD"; 
+        const ownerName = settings.ownerName || config.DEFAULT_OWNER_NAME || 'Sahan Maduwantha';
         const mode = process.env.WORK_TYPE || "Public";
         const totalCommands = commands.filter(c => c.pattern).length;
 
@@ -102,7 +102,7 @@ async (zanta, mek, m, { from, reply, args, userSettings }) => {
         menuText += `╰━━━━━━━━━━━━━━━━━━┈⊷\n\n`;
         
         menuText += `*💡 Tip:* Reply with a number to view commands.\n`;
-        menuText += `> *Powered by Zanta Cyber System*`;
+        menuText += `> *Powered by Sahan Maduwantha*`;
 
         const sentMessage = await zanta.sendMessage(from, {
             image: { url: MENU_IMAGE_URL },
